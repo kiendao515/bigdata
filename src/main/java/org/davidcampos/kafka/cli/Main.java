@@ -9,10 +9,13 @@ import org.davidcampos.kafka.consumer.KafkaFlinkConsumerExample;
 import org.davidcampos.kafka.consumer.KafkaSparkConsumerExample;
 import org.davidcampos.kafka.producer.KafkaProducerExample;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 public class Main {
     private static final Logger logger = LogManager.getLogger(Main.class);
 
-    public static void main(final String... args) {
+    public static void main(final String... args) throws IOException {
         String EXAMPLE_GOAL = System.getenv("EXAMPLE_GOAL") != null ?
                 System.getenv("EXAMPLE_GOAL") : "producer";
 
