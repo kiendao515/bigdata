@@ -8,6 +8,7 @@ import org.davidcampos.kafka.consumer.KafkaConsumerExample;
 import org.davidcampos.kafka.consumer.KafkaFlinkConsumerExample;
 import org.davidcampos.kafka.consumer.KafkaSparkConsumerExample;
 import org.davidcampos.kafka.producer.KafkaProducerExample;
+import org.davidcampos.kafka.producer.Producer2;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -27,6 +28,9 @@ public class Main {
         switch (EXAMPLE_GOAL.toLowerCase()) {
             case "producer":
                 KafkaProducerExample.main();
+                break;
+            case "producer2":
+                Producer2.main();
                 break;
             case "consumer.kafka":
                 KafkaConsumerExample.main();

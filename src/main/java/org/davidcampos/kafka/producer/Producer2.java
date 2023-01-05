@@ -1,4 +1,13 @@
 package org.davidcampos.kafka.producer;
+import java.io.*;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Scanner;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kafka.admin.AdminUtils;
@@ -14,22 +23,20 @@ import org.apache.logging.log4j.Logger;
 import org.davidcampos.kafka.commons.Commons;
 import org.davidcampos.kafka.commons.JobSerializer;
 import org.davidcampos.kafka.model.Job;
+import com.google.common.reflect.TypeToken;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
+import com.google.gson.Gson;
 
-public class KafkaProducerExample {
-    private static final Logger logger = LogManager.getLogger(KafkaProducerExample.class);
 
-    public static void main(final String... args) throws IOException {
-        // Create topic
+public class Producer2 {
+    private static final Logger logger = LogManager.getLogger(Producer2.class);
+    public static void main() throws IOException {
         createTopic();
-        FileInputStream inputStream = new FileInputStream("/app/data/topcv.json");
+        System.out.println("---Producer2---");
+        // byte[] data = Files.readAllBytes(Paths.get("/app/data/career.json"));
+        // System.out.println(data.toString());
+
+        FileInputStream inputStream = new FileInputStream("/app/data/career.json");
         InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
         BufferedReader reader = new BufferedReader(inputStreamReader);
         StringBuilder sb = new StringBuilder();
@@ -40,36 +47,11 @@ public class KafkaProducerExample {
         reader.close();
 
         System.out.println(sb.toString());
-        ObjectMapper mapper = new ObjectMapper();
-        List<Job> jobs = mapper.readValue(sb.toString(), new TypeReference<List<Job>>(){});
-
-        final Producer<String,Job> producer = createProducer();
-        int EXAMPLE_PRODUCER_INTERVAL = System.getenv("EXAMPLE_PRODUCER_INTERVAL") != null ?
-                Integer.parseInt(System.getenv("EXAMPLE_PRODUCER_INTERVAL")) : 100;
-
-        try {
-            for(int i=0;i< jobs.size();i++){
-                String uuid = UUID.randomUUID().toString();
-                ProducerRecord<String, Job> record = new ProducerRecord<>(Commons.EXAMPLE_KAFKA_TOPIC, uuid, jobs.get(i));
-                System.out.println(record.value());
-                //producer.send(record);
-                RecordMetadata metadata = producer.send(record).get();
-
-                logger.info("Sent ({}, {}) to topic {} @ {}.", uuid, jobs.get(i), Commons.EXAMPLE_KAFKA_TOPIC, metadata.timestamp());
-
-                Thread.sleep(EXAMPLE_PRODUCER_INTERVAL);
-            }
-        } catch (InterruptedException e) {
-            logger.error("An error occurred.", e);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        } finally {
-            producer.flush();
-            producer.close();
-        }
+        // Parse the JSON file using GSON
+        // Gson gson = new Gson();
+        // Map data = gson.fromJson(sb.toString(), Map.class);
+        // System.out.println(data);
     }
-
-
     private static Producer<String, Job> createProducer() {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, Commons.EXAMPLE_KAFKA_SERVER);
@@ -79,7 +61,6 @@ public class KafkaProducerExample {
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         return new KafkaProducer<>(props);
     }
-
     private static void createTopic() {
         int sessionTimeoutMs = 10 * 1000;
         int connectionTimeoutMs = 8 * 1000;

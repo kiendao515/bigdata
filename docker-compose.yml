@@ -39,20 +39,53 @@ services:
       - 9000:9000
     networks:
       - bridge
+  
+  crawler:
+    image: kiendt2001/crawler:latest
+    command: |
+      node crawl.js
+    volumes:
+      - data:/app/data
+
+  topcv-crawler:
+    image: kiendt2001/topcv-crawler:latest
+    command: |
+      node crawl.js
+    volumes:
+      - data:/app/data
 
   kafka-producer:
     image: bigdata-project
     depends_on:
       - kafka
+      - topcv-crawler
     environment:
       EXAMPLE_GOAL: "producer"
       EXAMPLE_KAFKA_TOPIC: "example"
       EXAMPLE_KAFKA_SERVER: "kafka:9092"
       EXAMPLE_ZOOKEEPER_SERVER: "zookeeper:32181"
       EXAMPLE_PRODUCER_INTERVAL: 100
+    volumes:
+      - data:/app/data
     networks:
       - bridge
 
+  producer2:
+    image: bigdata-project
+    depends_on:
+      - kafka
+      - crawler
+    environment:
+      EXAMPLE_GOAL: "producer2"
+      EXAMPLE_KAFKA_TOPIC: "example"
+      EXAMPLE_KAFKA_SERVER: "kafka:9092"
+      EXAMPLE_ZOOKEEPER_SERVER: "zookeeper:32181"
+      EXAMPLE_PRODUCER_INTERVAL: 100
+    volumes:
+      - data:/app/data
+    networks:
+      - bridge
+  
   kafka-consumer-kafka:
       image: bigdata-project
       depends_on:
@@ -64,30 +97,6 @@ services:
         EXAMPLE_ZOOKEEPER_SERVER: "zookeeper:32181"
       networks:
         - bridge
-
-  elasticsearch:
-    container_name: es-container
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.11.0
-    environment:
-      - xpack.security.enabled=false
-      - "discovery.type=single-node"
-    networks:
-      - es-net
-    ports:
-      - 9200:9200
-    mem_limit: 4g
-
-  kibana:
-    container_name: kb-container
-    image: docker.elastic.co/kibana/kibana:7.11.0
-    environment:
-      - ELASTICSEARCH_HOSTS=http://es-container:9200
-    networks:
-      - es-net
-    depends_on:
-      - elasticsearch
-    ports:
-      - 5601:5601
 
   kafka-consumer-spark:
         image: bigdata-project
@@ -114,3 +123,6 @@ services:
           EXAMPLE_ZOOKEEPER_SERVER: "zookeeper:32181"
         networks:
           - bridge
+volumes:
+  data:
+    driver: local
