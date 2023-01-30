@@ -3,11 +3,9 @@ import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Scanner;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kafka.admin.AdminUtils;
@@ -33,9 +31,6 @@ public class Producer2 {
     public static void main() throws IOException {
         createTopic();
         System.out.println("---Producer2---");
-        // byte[] data = Files.readAllBytes(Paths.get("/app/data/career.json"));
-        // System.out.println(data.toString());
-
         FileInputStream inputStream = new FileInputStream("/app/data/career.json");
         InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
         BufferedReader reader = new BufferedReader(inputStreamReader);
@@ -47,10 +42,33 @@ public class Producer2 {
         reader.close();
 
         System.out.println(sb.toString());
-        // Parse the JSON file using GSON
-        // Gson gson = new Gson();
-        // Map data = gson.fromJson(sb.toString(), Map.class);
-        // System.out.println(data);
+        ObjectMapper mapper = new ObjectMapper();
+        List<Job> jobs = mapper.readValue(sb.toString(), new TypeReference<List<Job>>(){});
+        final Producer<String,Job> producer = createProducer();
+        int EXAMPLE_PRODUCER_INTERVAL = System.getenv("EXAMPLE_PRODUCER_INTERVAL") != null ?
+                Integer.parseInt(System.getenv("EXAMPLE_PRODUCER_INTERVAL")) : 100;
+
+        try {
+            while (true){
+                for(int i=0;i< jobs.size();i++){
+                    String uuid = UUID.randomUUID().toString();
+                    ProducerRecord<String, Job> record = new ProducerRecord<>(Commons.EXAMPLE_KAFKA_TOPIC, uuid, jobs.get(i));
+                    System.out.println(record.value());
+                    RecordMetadata metadata = producer.send(record).get();
+
+                    logger.info("Sent ({}, {}) to topic {} @ {}.", uuid, jobs.get(i), Commons.EXAMPLE_KAFKA_TOPIC, metadata.timestamp());
+
+                    Thread.sleep(EXAMPLE_PRODUCER_INTERVAL);
+                }
+            }
+        } catch (InterruptedException e) {
+            logger.error("An error occurred.", e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } finally {
+            producer.flush();
+            producer.close();
+        }
     }
     private static Producer<String, Job> createProducer() {
         Properties props = new Properties();

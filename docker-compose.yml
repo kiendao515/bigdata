@@ -86,43 +86,53 @@ services:
     networks:
       - bridge
   
-  kafka-consumer-kafka:
-      image: bigdata-project
-      depends_on:
-        - kafka-producer
-      environment:
-        EXAMPLE_GOAL: "consumer.kafka"
-        EXAMPLE_KAFKA_TOPIC: "example"
-        EXAMPLE_KAFKA_SERVER: "kafka:9092"
-        EXAMPLE_ZOOKEEPER_SERVER: "zookeeper:32181"
-      networks:
-        - bridge
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.2
+    environment:
+      - discovery.type=single-node
+    ports:
+      - 9200:9200
+      - 9300:9300
+    volumes:
+      - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
 
-  kafka-consumer-spark:
-        image: bigdata-project
-        depends_on:
-          - kafka-producer
-        ports:
-          - 4040:4040
-        environment:
-          EXAMPLE_GOAL: "consumer.spark"
-          EXAMPLE_KAFKA_TOPIC: "example"
-          EXAMPLE_KAFKA_SERVER: "kafka:9092"
-          EXAMPLE_ZOOKEEPER_SERVER: "zookeeper:32181"
-        networks:
-          - bridge
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.9.2
+    depends_on:
+      - elasticsearch
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+  
+  consumer1:
+    image: bigdata-project
+    depends_on:
+       - kafka-producer
+       - elasticsearch
+    environment:
+      EXAMPLE_GOAL: "consumer.kafka"
+      EXAMPLE_KAFKA_TOPIC: "example"
+      EXAMPLE_KAFKA_SERVER: "kafka:9092"
+      EXAMPLE_ZOOKEEPER_SERVER: "zookeeper:32181"
+      ELASTICSEARCH_HOST: http://elasticsearch:9200
+    networks:
+      - bridge
 
-  kafka-consumer-flink:
-        image: bigdata-project
-        depends_on:
-          - kafka-producer
-        environment:
-          EXAMPLE_GOAL: "consumer.flink"
-          EXAMPLE_KAFKA_TOPIC: "example"
-          EXAMPLE_KAFKA_SERVER: "kafka:9092"
-          EXAMPLE_ZOOKEEPER_SERVER: "zookeeper:32181"
-        networks:
-          - bridge
+  consumer2:
+    image: bigdata-project
+    depends_on:
+       - kafka-producer
+    ports:
+       - 4040:4040
+    environment:
+      EXAMPLE_GOAL: "consumer.spark"
+      EXAMPLE_KAFKA_TOPIC: "example"
+      EXAMPLE_KAFKA_SERVER: "kafka:9092"
+      EXAMPLE_ZOOKEEPER_SERVER: "zookeeper:32181"
+    networks:
+      - bridge
+
 volumes:
   data:
     driver: local

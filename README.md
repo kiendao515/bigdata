@@ -21,7 +21,7 @@ Build
     ```
 1. Build Docker image 
     ```
-    docker build -t kafka-spark-flink-example .
+    docker build -t bigdata-project .
     ```
 
 Run
@@ -47,37 +47,6 @@ Check
     docker logs kafka-spark-flink-example_kafka-consumer-spark_1 -f
     ```
     
-    Output should be similar to:
-    ```
-    (two,3)
-    (one,3)
-    (nine,5)
-    (six,8)
-    (three,2)
-    (five,2)
-    (four,9)
-    (seven,3)
-    (eight,6)
-    (ten,6)
-    ```
-1. Check consumer with Flink logs
-    ```
-    docker logs kafka-spark-flink-example_kafka-consumer-flink_1 -f
-    ```
-    
-    Output should be similar to:
-    ```
-    1> (ten,85)
-    4> (nine,104)
-    1> (ten,86)
-    4> (five,91)
-    4> (one,94)
-    4> (six,90)
-    1> (three,89)
-    4> (six,91)
-    4> (five,92)
-    ```
-   
 Kafka Web UI
 ---
 Kafka Manager Web UI available at [http://localhost:9000]().

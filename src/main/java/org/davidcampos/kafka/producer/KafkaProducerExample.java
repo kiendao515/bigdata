@@ -48,16 +48,18 @@ public class KafkaProducerExample {
                 Integer.parseInt(System.getenv("EXAMPLE_PRODUCER_INTERVAL")) : 100;
 
         try {
-            for(int i=0;i< jobs.size();i++){
-                String uuid = UUID.randomUUID().toString();
-                ProducerRecord<String, Job> record = new ProducerRecord<>(Commons.EXAMPLE_KAFKA_TOPIC, uuid, jobs.get(i));
-                System.out.println(record.value());
-                //producer.send(record);
-                RecordMetadata metadata = producer.send(record).get();
+            while (true){
+                for(int i=0;i< jobs.size();i++){
+                    String uuid = UUID.randomUUID().toString();
+                    ProducerRecord<String, Job> record = new ProducerRecord<>(Commons.EXAMPLE_KAFKA_TOPIC, uuid, jobs.get(i));
+                    System.out.println(record.value());
+                    //producer.send(record);
+                    RecordMetadata metadata = producer.send(record).get();
 
-                logger.info("Sent ({}, {}) to topic {} @ {}.", uuid, jobs.get(i), Commons.EXAMPLE_KAFKA_TOPIC, metadata.timestamp());
+                    logger.info("Sent ({}, {}) to topic {} @ {}.", uuid, jobs.get(i), Commons.EXAMPLE_KAFKA_TOPIC, metadata.timestamp());
 
-                Thread.sleep(EXAMPLE_PRODUCER_INTERVAL);
+                    Thread.sleep(EXAMPLE_PRODUCER_INTERVAL);
+                }
             }
         } catch (InterruptedException e) {
             logger.error("An error occurred.", e);
