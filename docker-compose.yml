@@ -42,8 +42,6 @@ services:
   
   crawler:
     image: kiendt2001/crawler:latest
-    command: |
-      node crawl.js
     volumes:
       - data:/app/data
 
@@ -85,25 +83,61 @@ services:
       - data:/app/data
     networks:
       - bridge
-  
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.2
-    environment:
-      - discovery.type=single-node
-    ports:
-      - 9200:9200
-      - 9300:9300
-    volumes:
-      - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
 
+  producer3:
+    image: bigdata-project
+    depends_on:
+      - kafka
+      - crawler
+    environment:
+      EXAMPLE_GOAL: "producer3"
+      EXAMPLE_KAFKA_TOPIC: "example"
+      EXAMPLE_KAFKA_SERVER: "kafka:9092"
+      EXAMPLE_ZOOKEEPER_SERVER: "zookeeper:32181"
+      EXAMPLE_PRODUCER_INTERVAL: 100
+    volumes:
+      - data:/app/data
+    networks:
+      - bridge
+
+  elasticsearch:
+    container_name: es-container
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.11.0
+    restart: always
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - bridge
+    ports:
+      - "9200:9200"
+      - "9300:9300"
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.9.2
+    container_name: kb-container
+    image: docker.elastic.co/kibana/kibana:7.4.0
+    environment:
+      - ELASTICSEARCH_HOSTS=http://es-container:9200
+    networks:
+      - bridge
     depends_on:
       - elasticsearch
-    environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
-      - "5601:5601"
+      - 5601:5601
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:5.1.1
+    volumes:
+      - "./logstash.conf:/config-dir/logstash.conf"
+    restart: always
+    command: logstash -f /config-dir/logstash.conf
+    ports:
+      - "9600:9600"
+      - "7777:7777"
+    links:
+      - elasticsearch
+      - kafka
   
   consumer1:
     image: bigdata-project
@@ -115,12 +149,13 @@ services:
       EXAMPLE_KAFKA_TOPIC: "example"
       EXAMPLE_KAFKA_SERVER: "kafka:9092"
       EXAMPLE_ZOOKEEPER_SERVER: "zookeeper:32181"
-      ELASTICSEARCH_HOST: http://elasticsearch:9200
+      ELASTICSEARCH_HOST: http://es-container:9200
     networks:
       - bridge
 
   consumer2:
     image: bigdata-project
+    restart: always
     depends_on:
        - kafka-producer
     ports:
@@ -134,5 +169,7 @@ services:
       - bridge
 
 volumes:
+  elasticsearch-data:
+  logs:
   data:
     driver: local

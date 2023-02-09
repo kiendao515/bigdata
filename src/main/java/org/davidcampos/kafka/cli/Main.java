@@ -6,6 +6,7 @@ import org.davidcampos.kafka.consumer.KafkaConsumerExample;
 import org.davidcampos.kafka.consumer.KafkaSparkConsumerExample;
 import org.davidcampos.kafka.producer.KafkaProducerExample;
 import org.davidcampos.kafka.producer.Producer2;
+import org.davidcampos.kafka.producer.Producer3;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -29,6 +30,8 @@ public class Main {
             case "producer2":
                 Producer2.main();
                 break;
+            case "producer3":
+                Producer3.main();
             case "consumer.kafka":
                 KafkaConsumerExample.main();
                 break;

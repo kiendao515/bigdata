@@ -21,17 +21,14 @@ import org.apache.logging.log4j.Logger;
 import org.davidcampos.kafka.commons.Commons;
 import org.davidcampos.kafka.commons.JobSerializer;
 import org.davidcampos.kafka.model.Job;
-import com.google.common.reflect.TypeToken;
-
-import com.google.gson.Gson;
 
 
 public class Producer2 {
     private static final Logger logger = LogManager.getLogger(Producer2.class);
     public static void main() throws IOException {
         createTopic();
-        System.out.println("---Producer2---");
-        FileInputStream inputStream = new FileInputStream("/app/data/career.json");
+        System.out.println("---careerlink---");
+        FileInputStream inputStream = new FileInputStream("/app/data/careerlink.json");
         InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
         BufferedReader reader = new BufferedReader(inputStreamReader);
         StringBuilder sb = new StringBuilder();
@@ -49,7 +46,6 @@ public class Producer2 {
                 Integer.parseInt(System.getenv("EXAMPLE_PRODUCER_INTERVAL")) : 100;
 
         try {
-            while (true){
                 for(int i=0;i< jobs.size();i++){
                     String uuid = UUID.randomUUID().toString();
                     ProducerRecord<String, Job> record = new ProducerRecord<>(Commons.EXAMPLE_KAFKA_TOPIC, uuid, jobs.get(i));
@@ -60,7 +56,6 @@ public class Producer2 {
 
                     Thread.sleep(EXAMPLE_PRODUCER_INTERVAL);
                 }
-            }
         } catch (InterruptedException e) {
             logger.error("An error occurred.", e);
         } catch (ExecutionException e) {
