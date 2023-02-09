@@ -63,12 +63,12 @@ public class KafkaConsumerExample {
         final JavaInputDStream<ConsumerRecord<String, Job>> stream = KafkaUtils.createDirectStream(jssc,
                 LocationStrategies.PreferConsistent(),
                 ConsumerStrategies.Subscribe(topics, kafkaParams));
-        RestHighLevelClient client = new RestHighLevelClient(
-                RestClient.builder(
-                        new HttpHost("localhost", 9200, "http")));
         stream.map(record -> record.value())
                 .foreachRDD(rdd -> {
                     rdd.foreachPartition(value -> {
+                        System.out.println(value.next());
+                        RestHighLevelClient client = new RestHighLevelClient(RestClient.builder(
+                                new HttpHost("localhost", 9200, "http")));
                         while (value.hasNext()) {
                             Job job = value.next();
                             Map<String, Object> jsonMap = new HashMap<>();
@@ -80,11 +80,11 @@ public class KafkaConsumerExample {
                             jsonMap.put("deadline", job.deadline);
                             IndexRequest indexRequest = new IndexRequest("jobs")
                                     .id("1").source(jsonMap);
-                                    try {
-                                        IndexResponse response = client.index(indexRequest, RequestOptions.DEFAULT);
-                                    } catch(ElasticsearchException e) {
-                                        System.out.println(e.getMessage());
-                                    }
+                            try {
+                                IndexResponse response = client.index(indexRequest, RequestOptions.DEFAULT);
+                            } catch (ElasticsearchException e) {
+                                System.out.println(e.getMessage());
+                            }
                         }
                     });
                 });

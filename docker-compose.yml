@@ -46,9 +46,12 @@ services:
       - data:/app/data
 
   topcv-crawler:
-    image: kiendt2001/topcv-crawler:latest
-    command: |
-      node crawl.js
+    image: kiendt2001/topcv-crawler
+    volumes:
+      - data:/app/data
+  
+  career-builder:
+    image: kiendt2001/cb-crawler:latest
     volumes:
       - data:/app/data
 
@@ -57,6 +60,7 @@ services:
     depends_on:
       - kafka
       - topcv-crawler
+    restart: always
     environment:
       EXAMPLE_GOAL: "producer"
       EXAMPLE_KAFKA_TOPIC: "example"
@@ -100,31 +104,9 @@ services:
     networks:
       - bridge
 
-  elasticsearch:
-    container_name: es-container
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.11.0
+  visualize:
+    image: kiendt2001/consumer2
     restart: always
-    environment:
-      - xpack.security.enabled=false
-      - discovery.type=single-node
-    volumes:
-      - elasticsearch-data:/usr/share/elasticsearch/data
-    networks:
-      - bridge
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-  kibana:
-    container_name: kb-container
-    image: docker.elastic.co/kibana/kibana:7.4.0
-    environment:
-      - ELASTICSEARCH_HOSTS=http://es-container:9200
-    networks:
-      - bridge
-    depends_on:
-      - elasticsearch
-    ports:
-      - 5601:5601
 
   logstash:
     image: docker.elastic.co/logstash/logstash:5.1.1
@@ -136,20 +118,21 @@ services:
       - "9600:9600"
       - "7777:7777"
     links:
-      - elasticsearch
       - kafka
   
   consumer1:
     image: bigdata-project
     depends_on:
        - kafka-producer
-       - elasticsearch
+       - producer2
+       - producer3
+    ports:
+       - 4041:4041
     environment:
       EXAMPLE_GOAL: "consumer.kafka"
       EXAMPLE_KAFKA_TOPIC: "example"
       EXAMPLE_KAFKA_SERVER: "kafka:9092"
       EXAMPLE_ZOOKEEPER_SERVER: "zookeeper:32181"
-      ELASTICSEARCH_HOST: http://es-container:9200
     networks:
       - bridge
 
